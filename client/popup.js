@@ -26,6 +26,11 @@ class NotesApp {
         statusLabel.innerText = '';
     }
 
+    errorOccurred(message) {
+        this.showStatus(message);
+        console.error(message);
+    }
+
     async loadNotes() {
         var response;
         try {
@@ -35,14 +40,14 @@ class NotesApp {
                 response.json()
                     .then(data => {
                         if (data && data.detail) {
-                            throw new Error(`${response.status} error with message: ${data.detail}`);
+                            this.errorOccurred(`${response.status} error with message: ${data.detail}`);
                         } else {
-                            throw new Error(`${response.status} error while fetching notes.`);
+                            this.errorOccurred(`${response.status} error while fetching notes.`);
                         }
                     })
             }
         } catch (err) {
-            this.showStatus('Error loading notes. Please try again later.');
+            this.errorOccurred('Error loading notes. Please try again later.');
             console.error('Error fetching notes:', err);
             return;
         }
@@ -53,7 +58,7 @@ class NotesApp {
             this.renderNotes();
             this.hideStatus();
         } catch (err) {
-            this.showStatus('Error processing notes data.');
+            this.errorOccurred('Error processing notes data.');
             console.error('Error parsing notes JSON:', err);
         }
     }
@@ -90,14 +95,14 @@ class NotesApp {
                 response.json()
                     .then(data => {
                         if (data && data.detail) {
-                            throw new Error(`${response.status} error with message: ${data.detail}`);
+                            this.errorOccurred(`${response.status} error with message: ${data.detail}`);
                         } else {
-                            throw new Error(`${response.status} error while adding note.`);
+                            this.errorOccurred(`${response.status} error while adding note.`);
                         }
                     })
             }
         } catch (err) {
-            this.showStatus('Error adding note. Please try again later.');
+            this.errorOccurred('Error adding note. Please try again later.');
             console.error('Error adding note:', err);
             return;
         }
@@ -137,14 +142,14 @@ class NotesApp {
                 response.json()
                     .then(data => {
                         if (data && data.detail) {
-                            throw new Error(`${response.status} error with message: ${data.detail}`);
+                            this.errorOccurred(`${response.status} error with message: ${data.detail}`);
                         } else {
-                            throw new Error(`${response.status} error while updating note.`);
+                            this.errorOccurred(`${response.status} error while updating note.`);
                         }
                     })
             }
         } catch (err) {
-            this.showStatus('Error updating note. Please try again later.');
+            this.errorOccurred('Error updating note. Please try again later.');
             console.error('Error updating note:', err);
             return;
         }
@@ -170,14 +175,14 @@ class NotesApp {
                 response.json()
                     .then(data => {
                         if (data && data.detail) {
-                            throw new Error(`${response.status} error with message: ${data.detail}`);
+                            this.errorOccurred(`${response.status} error with message: ${data.detail}`);
                         } else {
-                            throw new Error(`${response.status} error while deleting note.`);
+                            this.errorOccurred(`${response.status} error while deleting note.`);
                         }
                     })
             }
         } catch (err) {
-            this.showStatus('Error deleting note. Please try again later.');
+            this.errorOccurred('Error deleting note. Please try again later.');
             console.error('Error deleting note:', err);
             return;
         }
@@ -198,7 +203,7 @@ class NotesApp {
             const noteDiv = document.createElement('div');
             noteDiv.className = 'note-item';
             noteDiv.innerHTML = `
-                <h3>${note.title}</h3>
+                <h2>${note.title}</h2>
                 <p><strong>Tags:</strong> ${note.tags.join(', ')}</p>
                 <p>${note.content}</p>
                 <small>Last edited: ${note.modified ? new Date(note.modified).toLocaleString() : 'Never'}</small>
