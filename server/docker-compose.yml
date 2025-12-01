@@ -1,0 +1,15 @@
+services:
+  cloudscribe:
+    container_name: cloudscribe-backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    volumes:
+      - ./:/app
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
