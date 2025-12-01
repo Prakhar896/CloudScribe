@@ -4,9 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scribe Notetaker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: medium;
+            margin: 20px;
+            width: 300px;
+            max-height: 250px;
+            overflow-y: auto;
+            word-wrap: break-word;
+        }
+
+        #statusLabel {
+            color: teal;
+            display: none;
+            visibility: hidden;   
+        }
+    </style>
 </head>
 <body>
     <h1>My Notes</h1>
+    <button id="addNoteButton">Add Note</button>
+    <h3 id="statusLabel"></h3>
     <div id="notes-list">
         
     </div>

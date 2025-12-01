@@ -9,7 +9,7 @@
     "background": {
         "service_worker": "background.js"
     },
-    "actions": {
+    "action": {
         "default_popup": "popup.html"
     }
 }
