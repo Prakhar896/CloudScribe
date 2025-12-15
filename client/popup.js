@@ -41,7 +41,7 @@ function clearCredentials() {
 }
 
 // API helpers
-async function apiCall(endpoint, method = 'GET', body = null, requiresAuth = true) {
+async function apiCall(endpoint, method = 'GET', body = null, requiresAuth = true, username=null, keyphrase=null) {
     const options = {
         method,
         headers: {
@@ -49,9 +49,9 @@ async function apiCall(endpoint, method = 'GET', body = null, requiresAuth = tru
         }
     };
 
-    if (requiresAuth && state.username && state.keyphrase) {
-        options.headers['username'] = state.username;
-        options.headers['keyphrase'] = state.keyphrase;
+    if (requiresAuth && ((state.username && state.keyphrase) || (username && keyphrase))) {
+        options.headers['username'] = username || state.username;
+        options.headers['keyphrase'] = keyphrase || state.keyphrase;
     }
 
     if (body) {
@@ -175,6 +175,26 @@ async function register() {
         setTimeout(() => showJournals(), 1000);
     } catch (error) {
         showError('auth-error', `Registration failed: ${error.message}`);
+    }
+}
+
+async function deleteAccount() {
+    const username = document.getElementById('auth-username').value.trim();
+    const keyphrase = document.getElementById('auth-keyphrase').value;
+
+    if (!username || !keyphrase) {
+        showError('auth-error', 'Please enter both username and keyphrase.');
+        return;
+    }
+
+    clearError('auth-error');
+
+    try {
+        await apiCall('/user', 'DELETE', null, true, username, keyphrase);
+        logout();
+        showSuccess('auth-error', 'Account deleted successfully!');
+    } catch (error) {
+        showError('auth-error', `Account deletion failed: ${error.message}`);
     }
 }
 
@@ -487,6 +507,7 @@ function showNoteDetail(note) {
 document.getElementById('login-btn').addEventListener('click', login);
 document.getElementById('register-btn').addEventListener('click', register);
 document.getElementById('logout-btn').addEventListener('click', logout);
+document.getElementById('delete-account-btn').addEventListener('click', deleteAccount);
 
 document.getElementById('add-btn').addEventListener('click', () => {
     const currentView = document.querySelector('.view.active').id;
