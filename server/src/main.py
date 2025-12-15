@@ -3,8 +3,9 @@ from typing import Annotated
 from uuid import uuid4
 from fastapi import FastAPI, HTTPException, Header
 from .background import ThreadManager
-from .models import Journal, JournalInfo, JournalCreate, JournalUpdate, Note, NoteCreate, NoteUpdate
+from .models import Journal, JournalCreate, JournalUpdate, Note, NoteCreate, NoteUpdate, User, UserCreate, UserUpdate, UserInfo
 from .database import ScribeDB
+from .dependencies import obtain_user
 from contextlib import asynccontextmanager
 
 @asynccontextmanager
@@ -21,90 +22,153 @@ app = FastAPI(title='Scribe', lifespan=lifespan)
 async def home():
     return {"message": "Welcome to the CloudScribe API."}
 
-## New Journal and Note endpoints
-@app.post("/new/journal", responses={
-    200: {
-        "status": "Journal created successfully.",
-        "journal_id": "string"
-    }
-})
-async def create_journal(info: JournalCreate):
-    journal = Journal(
+## New User, Journal and Note endpoints
+@app.post("/new/user")
+async def create_user(info: UserCreate) -> UserInfo:
+    user = User(
         id=uuid4().hex,
-        title=info.title,
-        description=info.description,
-        author=info.author,
+        username=info.username,
         keyphrase=info.keyphrase,
         created=datetime.datetime.now(datetime.timezone.utc).isoformat()
     )
     
+    ScribeDB.save_user(user)
+    return user.desensitised()
+
+@app.post("/new/journal", responses={
+    401: {
+        "model": HTTPException,
+        "description": "Unauthorized user."
+    }
+})
+async def create_journal(info: JournalCreate, user: obtain_user) -> Journal:
+    journal = Journal(
+        id=uuid4().hex,
+        authorID=user.id,
+        title=info.title,
+        description=info.description,
+        created=datetime.datetime.now(datetime.timezone.utc).isoformat()
+    )
+    
     ScribeDB.save_journal(journal)
-    return {"status": "Journal created successfully.", "journal_id": journal.id}
+    return Journal
 
 @app.post("/new/note", responses={
     404: {
         "detail": "Journal not found."
     },
-    200: {
-        "status": "Note saved successfully."
+    401: {
+        "model": HTTPException,
+        "description": "Unauthorized user."
     }
 })
-async def create_note(note: NoteCreate, keyphrase: Annotated[str, Header()]):
+async def create_note(note: NoteCreate, user: obtain_user) -> Note:
+    new_note = Note(
+        id=uuid4().hex,
+        title=note.title,
+        content=note.content,
+        created=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        tags=note.tags
+    )
     status = ScribeDB.save_note(
-        note=Note(
-            id=uuid4().hex,
-            title=note.title,
-            content=note.content,
-            created=datetime.datetime.now(datetime.timezone.utc).isoformat(),
-            tags=note.tags
-        ),
+        note=new_note,
         journal_id=note.journal_id,
-        keyphrase=keyphrase
+        authorID=user.id
     )
     if not status:
         raise HTTPException(status_code=404, detail="Journal not found.")
     
-    return {"status": "Note saved successfully."}
+    return new_note
 
+## User Endpoints
+@app.get("/user/{user_id}", responses={
+    401: {
+        "detail": "Unauthorized user."
+    }
+})
+async def get_user(user: obtain_user) -> UserInfo:
+    return user.desensitised()
+
+@app.put("/user/{user_id}", responses={
+    401: {
+        "detail": "Unauthorized user."
+    }
+})
+async def update_user(user: obtain_user, info: UserUpdate) -> UserInfo:
+    if user.update(info):
+        ScribeDB.save_user(user)
+    
+    return user.desensitised()
+
+@app.delete("/user/{user_id}", responses={
+    401: {
+        "detail": "Unauthorized user."
+    },
+    200: {
+        "status": "User deleted successfully."
+    }
+})
+async def delete_user(user: obtain_user) -> dict:
+    ScribeDB.delete_user(user.id)
+    return {"status": "User deleted successfully."}
 
 ## Journal Endpoints
+@app.get("/journals", responses={
+    401: {
+        "detail": "Unauthorized user."
+    }
+})
+async def get_user_journals(user: obtain_user) -> list[Journal]:
+    journals = ScribeDB.deserialized_journals()
+    user_journals = [journal for journal in journals if journal.authorID == user.id]
+    return user_journals
+
 @app.get("/journal/{journal_id}", responses={
     404: {
         "detail": "Journal not found."
+    },
+    401: {
+        "detail": "Unauthorized user."
     }
 })
-def get_journal(journal_id: str, keyphrase: Annotated[str, Header()]) -> JournalInfo:
-    journal = ScribeDB.retrieve_journal_with_author(journal_id, keyphrase)
+def get_journal(journal_id: str, user: obtain_user) -> Journal:
+    journal = ScribeDB.retrieve_journal_with_author(journal_id, user.id)
     if journal is None:
         raise HTTPException(status_code=404, detail="Journal not found.")
     
-    return journal.desensitised()
+    return journal
 
 @app.put("/journal/{journal_id}", responses={
     404: {
         "detail": "Journal not found."
+    },
+    401: {
+        "detail": "Unauthorized user."
     }
 })
-async def update_journal(journal_id: str, info: JournalUpdate, keyphrase: Annotated[str, Header()]) -> JournalInfo:
-    journal = ScribeDB.retrieve_journal_with_author(journal_id, keyphrase)
+async def update_journal(journal_id: str, info: JournalUpdate, user: obtain_user) -> Journal:
+    journal = ScribeDB.retrieve_journal_with_author(journal_id, user.id)
     if journal is None:
         raise HTTPException(status_code=404, detail="Journal not found.")
     
     if journal.update(info):
         ScribeDB.save_journal(journal)
     
-    return journal.desensitised()
+    return journal
 
 @app.delete("/journal/{journal_id}", responses={
     404: {
         "detail": "Journal not found."
     },
+    401: {
+        "detail": "Unauthorized user."
+    },
     200: {
         "status": "Journal deleted successfully."
     }
 })
-async def delete_journal(journal_id: str, keyphrase: Annotated[str, Header()]) -> dict:
-    status = ScribeDB.delete_journal(journal_id, keyphrase)
+async def delete_journal(journal_id: str, user: obtain_user):
+    status = ScribeDB.delete_journal(journal_id, user.id)
     if not status:
         raise HTTPException(status_code=404, detail="Journal not found.")
     
@@ -113,10 +177,13 @@ async def delete_journal(journal_id: str, keyphrase: Annotated[str, Header()]) -
 @app.get("/journal/{journal_id}/notes", responses={
     404: {
         "detail": "Journal not found."
+    },
+    401: {
+        "detail": "Unauthorized user."
     }
 })
-async def get_journal_notes(journal_id: str, keyphrase: Annotated[str, Header()]) -> list[Note]:
-    journal = ScribeDB.retrieve_journal_with_author(journal_id, keyphrase)
+async def get_journal_notes(journal_id: str, user: obtain_user) -> list[Note]:
+    journal = ScribeDB.retrieve_journal_with_author(journal_id, user.id)
     if journal is None:
         raise HTTPException(status_code=404, detail="Journal not found.")
     
@@ -127,10 +194,13 @@ async def get_journal_notes(journal_id: str, keyphrase: Annotated[str, Header()]
 @app.get("/journal/{journal_id}/note/{note_id}", responses={
     404: {
         "detail": "Journal or Note not found."
+    },
+    401: {
+        "detail": "Unauthorized user."
     }
 })
-async def get_journal_note(journal_id: str, note_id: str, keyphrase: Annotated[str, Header()]) -> Note:
-    journal = ScribeDB.retrieve_journal_with_author(journal_id, keyphrase)
+async def get_journal_note(journal_id: str, note_id: str, user: obtain_user) -> Note:
+    journal = ScribeDB.retrieve_journal_with_author(journal_id, user.id)
     if journal is None:
         raise HTTPException(status_code=404, detail="Journal or Note not found.")
     
@@ -143,10 +213,13 @@ async def get_journal_note(journal_id: str, note_id: str, keyphrase: Annotated[s
 @app.put("/journal/{journal_id}/note/{note_id}", responses={
     404: {
         "detail": "Journal or Note not found."
+    },
+    401: {
+        "detail": "Unauthorized user."
     }
 })
-async def update_journal_note(journal_id: str, note_id: str, info: NoteUpdate, keyphrase: Annotated[str, Header()]) -> Note:
-    journal = ScribeDB.retrieve_journal_with_author(journal_id, keyphrase)
+async def update_journal_note(journal_id: str, note_id: str, info: NoteUpdate, user: obtain_user) -> Note:
+    journal = ScribeDB.retrieve_journal_with_author(journal_id, user.id)
     if journal is None:
         raise HTTPException(status_code=404, detail="Journal or Note not found.")
     
@@ -163,12 +236,15 @@ async def update_journal_note(journal_id: str, note_id: str, info: NoteUpdate, k
     404: {
         "detail": "Journal or Note not found."
     },
+    401: {
+        "detail": "Unauthorized user."
+    },
     200: {
         "status": "Note deleted successfully."
     }
 })
-async def delete_journal_note(journal_id: str, note_id: str, keyphrase: Annotated[str, Header()]) -> dict:
-    journal = ScribeDB.retrieve_journal_with_author(journal_id, keyphrase)
+async def delete_journal_note(journal_id: str, note_id: str, user: obtain_user):
+    journal = ScribeDB.retrieve_journal_with_author(journal_id, user.id)
     if journal is None:
         raise HTTPException(status_code=404, detail="Journal or Note not found.")
     

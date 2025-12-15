@@ -300,7 +300,7 @@ class ScribeDB:
         return True
     
     @staticmethod
-    def delete_journal(journal_id: str) -> bool:
+    def delete_journal(journal_id: str, authorID: str | None=None) -> bool:
         data = copy.deepcopy(ScribeDB.fragment.data)
         
         if "journals" not in data or not isinstance(data["journals"], dict):
@@ -308,6 +308,9 @@ class ScribeDB:
         
         if journal_id not in data["journals"]:
             return False
+        if authorID:
+            if data["journals"][journal_id].get("authorID", "") != authorID:
+                return False
         
         del data["journals"][journal_id]
         
