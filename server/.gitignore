@@ -3,3 +3,4 @@ virt/
 ScribeDBStreamLog.txt
 credentials.json
 __pycache__/
+.DS_Store

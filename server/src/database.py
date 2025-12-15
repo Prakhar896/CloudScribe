@@ -2,7 +2,23 @@ import os, json, datetime, time, threading, copy
 from typing_extensions import Literal
 from .client import CloudFragment
 from .background import ThreadManager, Trigger
-from .models import Note
+from .models import Note, Journal
+
+# Schema:
+# - journals: dict
+#     - <journal_id>: dict
+#         - title: str
+#         - description: str
+#         - author: str
+#         - created: str
+#         - keyphrase: str
+#         - notes: dict
+#             - id: str
+#             - title: str
+#             - content: str
+#             - created: str
+#             - modified: str | None = None
+#             - tags: list[str] = []
 
 class ScribeDB:
     credentialsFile = "credentials.json"
@@ -139,42 +155,101 @@ class ScribeDB:
         return ScribeDB.fragment.data
     
     @staticmethod
-    def load_entries() -> list[Note]:
+    def deserialized_data() -> list[Journal]:
         data = copy.deepcopy(ScribeDB.fragment.data)
-        if "notes" not in data or not isinstance(data["notes"], dict):
-            return []
+        journals = []
         
-        notes = []
-        for _, noteDict in data["notes"].items():
-            notes.append(Note.from_dict(noteDict))
+        if "journals" not in data or not isinstance(data["journals"], dict):
+            return journals
         
-        return notes
+        for _, journalDict in data["journals"].items():
+            journals.append(Journal.from_dict(journalDict))
+        
+        return journals
     
     @staticmethod
-    def save_entry(note: Note) -> None:
+    def retrieve_journal(journal_id: str) -> Journal | None:
+        journals = ScribeDB.deserialized_data()
+        for journal in journals:
+            if journal.id == journal_id:
+                return journal
+        
+        return None
+    
+    @staticmethod
+    def retrieve_journal_with_auth(journal_id: str, keyphrase: str) -> Journal | None:
+        journal = ScribeDB.retrieve_journal(journal_id)
+        if journal is None:
+            return None
+        
+        if journal.keyphrase != keyphrase:
+            return None
+        
+        return journal
+    
+    @staticmethod
+    def retrieve_note(journal_id: str, note_id: str) -> Note | None:
+        journal = ScribeDB.retrieve_journal(journal_id)
+        if journal is None:
+            return None
+        
+        for note in journal.notes:
+            if note.id == note_id:
+                return note
+        
+        return None
+    
+    @staticmethod
+    def retrieve_note_with_auth(journal_id: str, note_id: str, keyphrase: str) -> Note | None:
+        journal = ScribeDB.retrieve_journal_with_auth(journal_id, keyphrase)
+        if journal is None:
+            return None
+        
+        for note in journal.notes:
+            if note.id == note_id:
+                return note
+        
+        return None
+    
+    @staticmethod
+    def save_journal(journal: Journal) -> None:
         data = copy.deepcopy(ScribeDB.fragment.data)
         
-        if "notes" not in data:
-            data["notes"] = []
+        if "journals" not in data:
+            data["journals"] = {}
         
-        if not isinstance(data["notes"], dict):
-            data["notes"] = {}
+        if not isinstance(data["journals"], dict):
+            data["journals"] = {}
         
-        data["notes"][note.id] = note.to_dict()
+        data["journals"][journal.id] = journal.to_dict()
         
         ScribeDB.write(data)
     
     @staticmethod
-    def delete_entry(note_id: str) -> None:
-        data = copy.deepcopy(ScribeDB.fragment.data)
+    def save_note(note: Note, journal_id: str, keyphrase: str | None=None) -> None:
+        journal = ScribeDB.retrieve_journal(journal_id) if keyphrase is None else ScribeDB.retrieve_journal_with_auth(journal_id, keyphrase)
+        if journal is None:
+            raise Exception("SCRIBEDB SAVE_NOTE ERROR: Journal with ID '{}' not found. Potential authentication failure.".format(journal_id))
         
-        if "notes" not in data or not isinstance(data["notes"], dict):
-            return
+        # Check if note with same ID exists, update if so
+        for idx, existing_note in enumerate(journal.notes):
+            if existing_note.id == note.id:
+                journal.notes[idx] = note
+                ScribeDB.save_journal(journal)
+                return
         
-        if note_id in data["notes"]:
-            del data["notes"][note_id]
+        # Otherwise, add new note
+        journal.notes.append(note)
+        ScribeDB.save_journal(journal)
+    
+    @staticmethod
+    def save_entries(journal_id: str, notes: list[Note], keyphrase: str | None=None) -> None:
+        journal = ScribeDB.retrieve_journal(journal_id) if keyphrase is None else ScribeDB.retrieve_journal_with_auth(journal_id, keyphrase)
+        if journal is None:
+            raise Exception("SCRIBEDB SAVE_ENTRIES ERROR: Journal with ID '{}' not found. Potential authentication failure.".format(journal_id))
         
-        ScribeDB.write(data)
+        journal.notes = notes
+        ScribeDB.save_journal(journal)
     
     @staticmethod
     def shutdown():
