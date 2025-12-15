@@ -94,7 +94,7 @@ async def create_note(note: NoteCreate, user: obtain_user) -> Note:
     return new_note
 
 ## User Endpoints
-@app.get("/user/{user_id}", responses={
+@app.get("/user", responses={
     401: {
         "model": ErrorMessage,
         "description": "Unauthorized user."
@@ -103,7 +103,7 @@ async def create_note(note: NoteCreate, user: obtain_user) -> Note:
 async def get_user(user: obtain_user) -> UserInfo:
     return user.desensitised()
 
-@app.put("/user/{user_id}", responses={
+@app.put("/user", responses={
     401: {
         "model": ErrorMessage,
         "description": "Unauthorized user."
@@ -124,7 +124,7 @@ async def update_user(user: obtain_user, info: UserUpdate) -> UserInfo:
     
     return user.desensitised()
 
-@app.delete("/user/{user_id}", responses={
+@app.delete("/user", responses={
     401: {
         "model": ErrorMessage,
         "description": "Unauthorized user."
