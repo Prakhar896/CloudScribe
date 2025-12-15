@@ -168,7 +168,7 @@ class ScribeDB:
         return journals
     
     @staticmethod
-    def derialized_users() -> list[User]:
+    def deserialized_users() -> list[User]:
         data = copy.deepcopy(ScribeDB.fragment.data)
         
         users = []
@@ -182,7 +182,7 @@ class ScribeDB:
     
     @staticmethod
     def retrieve_user(user_id: str) -> User | None:
-        users = ScribeDB.derialized_users()
+        users = ScribeDB.deserialized_users()
         for user in users:
             if user.id == user_id:
                 return user
@@ -191,7 +191,7 @@ class ScribeDB:
     
     @staticmethod
     def retrieve_user_by_username(username: str) -> User | None:
-        users = ScribeDB.derialized_users()
+        users = ScribeDB.deserialized_users()
         for user in users:
             if user.username == username:
                 return user
@@ -283,7 +283,7 @@ class ScribeDB:
     
     @staticmethod
     def save_journal(journal: Journal) -> bool:
-        if journal.authorID not in [user.id for user in ScribeDB.derialized_users()]:
+        if journal.authorID not in [user.id for user in ScribeDB.deserialized_users()]:
             raise Exception("SCRIBEDB SAVE_JOURNAL ERROR: AuthorID does not correspond to any existing user.")
         
         data = copy.deepcopy(ScribeDB.fragment.data)

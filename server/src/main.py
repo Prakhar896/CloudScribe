@@ -1,9 +1,10 @@
 import datetime
 from typing import Annotated
 from uuid import uuid4
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from .background import ThreadManager
-from .models import Journal, JournalCreate, JournalUpdate, Note, NoteCreate, NoteUpdate, User, UserCreate, UserUpdate, UserInfo
+from .models import Journal, JournalCreate, JournalUpdate, Note, NoteCreate, NoteUpdate, User, UserCreate, UserUpdate, UserInfo, ErrorMessage, StatusUpdate
 from .database import ScribeDB
 from .dependencies import obtain_user
 from contextlib import asynccontextmanager
@@ -23,8 +24,17 @@ async def home():
     return {"message": "Welcome to the CloudScribe API."}
 
 ## New User, Journal and Note endpoints
-@app.post("/new/user")
+@app.post("/new/user", responses={
+    409: {
+        "model": ErrorMessage,
+        "description": "Username already exists."
+    }
+})
 async def create_user(info: UserCreate) -> UserInfo:
+    all_users = ScribeDB.deserialized_users()
+    if any(u.username == info.username for u in all_users):
+        raise HTTPException(status_code=409, detail="Username already exists.")
+    
     user = User(
         id=uuid4().hex,
         username=info.username,
@@ -37,7 +47,7 @@ async def create_user(info: UserCreate) -> UserInfo:
 
 @app.post("/new/journal", responses={
     401: {
-        "model": HTTPException,
+        "model": ErrorMessage,
         "description": "Unauthorized user."
     }
 })
@@ -51,14 +61,14 @@ async def create_journal(info: JournalCreate, user: obtain_user) -> Journal:
     )
     
     ScribeDB.save_journal(journal)
-    return Journal
+    return journal
 
 @app.post("/new/note", responses={
     404: {
         "detail": "Journal not found."
     },
     401: {
-        "model": HTTPException,
+        "model": ErrorMessage,
         "description": "Unauthorized user."
     }
 })
@@ -83,7 +93,8 @@ async def create_note(note: NoteCreate, user: obtain_user) -> Note:
 ## User Endpoints
 @app.get("/user/{user_id}", responses={
     401: {
-        "detail": "Unauthorized user."
+        "model": ErrorMessage,
+        "description": "Unauthorized user."
     }
 })
 async def get_user(user: obtain_user) -> UserInfo:
@@ -91,10 +102,20 @@ async def get_user(user: obtain_user) -> UserInfo:
 
 @app.put("/user/{user_id}", responses={
     401: {
-        "detail": "Unauthorized user."
+        "model": ErrorMessage,
+        "description": "Unauthorized user."
+    },
+    409: {
+        "model": ErrorMessage,
+        "description": "Username already exists."
     }
 })
 async def update_user(user: obtain_user, info: UserUpdate) -> UserInfo:
+    if isinstance(info.username, str) and user.username != info.username:
+        all_users = ScribeDB.deserialized_users()
+        if any(u.username == info.username for u in all_users):
+            raise HTTPException(status_code=409, detail="Username already exists.")
+    
     if user.update(info):
         ScribeDB.save_user(user)
     
@@ -102,20 +123,23 @@ async def update_user(user: obtain_user, info: UserUpdate) -> UserInfo:
 
 @app.delete("/user/{user_id}", responses={
     401: {
-        "detail": "Unauthorized user."
+        "model": ErrorMessage,
+        "description": "Unauthorized user."
     },
     200: {
-        "status": "User deleted successfully."
+        "model": StatusUpdate,
+        "description": "User deleted successfully."
     }
 })
 async def delete_user(user: obtain_user) -> dict:
     ScribeDB.delete_user(user.id)
-    return {"status": "User deleted successfully."}
+    return JSONResponse(content={"status": "User deleted successfully."})
 
 ## Journal Endpoints
 @app.get("/journals", responses={
     401: {
-        "detail": "Unauthorized user."
+        "model": ErrorMessage,
+        "description": "Unauthorized user."
     }
 })
 async def get_user_journals(user: obtain_user) -> list[Journal]:
@@ -125,10 +149,12 @@ async def get_user_journals(user: obtain_user) -> list[Journal]:
 
 @app.get("/journal/{journal_id}", responses={
     404: {
-        "detail": "Journal not found."
+        "model": ErrorMessage,
+        "description": "Journal not found."
     },
     401: {
-        "detail": "Unauthorized user."
+        "model": ErrorMessage,
+        "description": "Unauthorized user."
     }
 })
 def get_journal(journal_id: str, user: obtain_user) -> Journal:
@@ -140,10 +166,12 @@ def get_journal(journal_id: str, user: obtain_user) -> Journal:
 
 @app.put("/journal/{journal_id}", responses={
     404: {
-        "detail": "Journal not found."
+        "model": ErrorMessage,
+        "description": "Journal not found."
     },
     401: {
-        "detail": "Unauthorized user."
+        "model": ErrorMessage,
+        "description": "Unauthorized user."
     }
 })
 async def update_journal(journal_id: str, info: JournalUpdate, user: obtain_user) -> Journal:
@@ -158,13 +186,16 @@ async def update_journal(journal_id: str, info: JournalUpdate, user: obtain_user
 
 @app.delete("/journal/{journal_id}", responses={
     404: {
-        "detail": "Journal not found."
+        "model": ErrorMessage,
+        "description": "Journal not found."
     },
     401: {
-        "detail": "Unauthorized user."
+        "model": ErrorMessage,
+        "description": "Unauthorized user."
     },
     200: {
-        "status": "Journal deleted successfully."
+        "model": StatusUpdate,
+        "description": "Journal deleted successfully."
     }
 })
 async def delete_journal(journal_id: str, user: obtain_user):
@@ -172,14 +203,16 @@ async def delete_journal(journal_id: str, user: obtain_user):
     if not status:
         raise HTTPException(status_code=404, detail="Journal not found.")
     
-    return {"status": "Journal deleted successfully."}
+    return JSONResponse(content={"status": "Journal deleted successfully."})
 
 @app.get("/journal/{journal_id}/notes", responses={
     404: {
-        "detail": "Journal not found."
+        "model": ErrorMessage,
+        "description": "Journal not found."
     },
     401: {
-        "detail": "Unauthorized user."
+        "model": ErrorMessage,
+        "description": "Unauthorized user."
     }
 })
 async def get_journal_notes(journal_id: str, user: obtain_user) -> list[Note]:
@@ -189,14 +222,15 @@ async def get_journal_notes(journal_id: str, user: obtain_user) -> list[Note]:
     
     return journal.notes
 
-
 ## Note Endpoints
 @app.get("/journal/{journal_id}/note/{note_id}", responses={
     404: {
-        "detail": "Journal or Note not found."
+        "model": ErrorMessage,
+        "description": "Journal or Note not found."
     },
     401: {
-        "detail": "Unauthorized user."
+        "model": ErrorMessage,
+        "description": "Unauthorized user."
     }
 })
 async def get_journal_note(journal_id: str, note_id: str, user: obtain_user) -> Note:
@@ -212,10 +246,12 @@ async def get_journal_note(journal_id: str, note_id: str, user: obtain_user) -> 
 
 @app.put("/journal/{journal_id}/note/{note_id}", responses={
     404: {
-        "detail": "Journal or Note not found."
+        "model": ErrorMessage,
+        "description": "Journal or Note not found."
     },
     401: {
-        "detail": "Unauthorized user."
+        "model": ErrorMessage,
+        "description": "Unauthorized user."
     }
 })
 async def update_journal_note(journal_id: str, note_id: str, info: NoteUpdate, user: obtain_user) -> Note:
@@ -234,13 +270,16 @@ async def update_journal_note(journal_id: str, note_id: str, info: NoteUpdate, u
 
 @app.delete("/journal/{journal_id}/note/{note_id}", responses={
     404: {
-        "detail": "Journal or Note not found."
+        "model": ErrorMessage,
+        "description": "Journal or Note not found."
     },
     401: {
-        "detail": "Unauthorized user."
+        "model": ErrorMessage,
+        "description": "Unauthorized user."
     },
     200: {
-        "status": "Note deleted successfully."
+        "model": StatusUpdate,
+        "description": "Note deleted successfully."
     }
 })
 async def delete_journal_note(journal_id: str, note_id: str, user: obtain_user):
@@ -259,4 +298,4 @@ async def delete_journal_note(journal_id: str, note_id: str, user: obtain_user):
     
     ScribeDB.save_journal(journal)
     
-    return {"status": "Note deleted successfully."}
+    return JSONResponse(content={"status": "Note deleted successfully."})

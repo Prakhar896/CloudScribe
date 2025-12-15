@@ -1,6 +1,12 @@
 import datetime
 from pydantic import BaseModel
 
+class ErrorMessage(BaseModel):
+    detail: str
+
+class StatusUpdate(BaseModel):
+    status: str
+
 class User(BaseModel):
     id: str
     username: str
