@@ -1,4 +1,4 @@
-const API_BASE = 'http://127.0.0.1:8000';
+var API_BASE = 'http://127.0.0.1:8000';
 
 // State management
 const state = {
@@ -20,6 +20,7 @@ function loadCredentials() {
         const auth = JSON.parse(saved);
         state.username = auth.username;
         state.keyphrase = auth.keyphrase;
+        API_BASE = auth.API_BASE || API_BASE;
         return true;
     }
     return false;
@@ -27,7 +28,7 @@ function loadCredentials() {
 
 // Save credentials
 function saveCredentials(username, keyphrase) {
-    localStorage.setItem('cloudscribe_auth', JSON.stringify({ username, keyphrase }));
+    localStorage.setItem('cloudscribe_auth', JSON.stringify({ username, keyphrase, API_BASE }));
     state.username = username;
     state.keyphrase = keyphrase;
 }
@@ -38,6 +39,7 @@ function clearCredentials() {
     state.username = null;
     state.keyphrase = null;
     state.user = null;
+    API_BASE = 'http://127.0.0.1:8000';
 }
 
 // API helpers
@@ -133,6 +135,11 @@ function formatDate(dateString) {
 async function login() {
     const username = document.getElementById('auth-username').value.trim();
     const keyphrase = document.getElementById('auth-keyphrase').value;
+    const serverBase = document.getElementById('auth-server-base').value.trim();
+    
+    if (serverBase) {
+        API_BASE = serverBase;
+    }
 
     if (!username || !keyphrase) {
         showError('auth-error', 'Please enter both username and keyphrase.');
@@ -159,6 +166,11 @@ async function login() {
 async function register() {
     const username = document.getElementById('auth-username').value.trim();
     const keyphrase = document.getElementById('auth-keyphrase').value;
+    const serverBase = document.getElementById('auth-server-base').value.trim();
+    
+    if (serverBase) {
+        API_BASE = serverBase;
+    }
 
     if (!username || !keyphrase) {
         showError('auth-error', 'Please enter both username and keyphrase.');
@@ -181,6 +193,11 @@ async function register() {
 async function deleteAccount() {
     const username = document.getElementById('auth-username').value.trim();
     const keyphrase = document.getElementById('auth-keyphrase').value;
+    const serverBase = document.getElementById('auth-server-base').value.trim();
+    
+    if (serverBase) {
+        API_BASE = serverBase;
+    }
 
     if (!username || !keyphrase) {
         showError('auth-error', 'Please enter both username and keyphrase.');
@@ -545,6 +562,9 @@ document.getElementById('note-tag-input').addEventListener('keypress', (e) => {
 
 // Allow Enter to submit on auth forms
 document.getElementById('auth-keyphrase').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') login();
+});
+document.getElementById('auth-server-base').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') login();
 });
 
