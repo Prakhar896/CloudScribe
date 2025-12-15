@@ -215,16 +215,37 @@ async function showJournals() {
         } else {
             container.innerHTML = state.journals.map(journal => `
                         <div class="journal-item" data-id="${journal.id}">
-                            <h3>${journal.title}</h3>
-                            <p>${journal.description || 'No description'}</p>
-                            <p style="margin-top: 6px; font-size: 11px;">Created: ${formatDate(journal.created)}</p>
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div style="flex: 1; min-width: 0;">
+                                    <h3>${journal.title}</h3>
+                                    <p>${journal.description || 'No description'}</p>
+                                    <p style="margin-top: 6px; font-size: 11px;">Created: ${formatDate(journal.created)}</p>
+                                </div>
+                                <button class="icon-btn" style="margin-left: 8px; background: rgba(220, 53, 69, 0.1); color: #dc3545; flex-shrink: 0;" data-delete-id="${journal.id}" title="Delete Journal">X</button>
+                            </div>
                         </div>
                     `).join('');
 
             container.querySelectorAll('.journal-item').forEach(item => {
-                item.addEventListener('click', () => {
+                const journalDiv = item.querySelector('div > div');
+                journalDiv.addEventListener('click', () => {
                     const journal = state.journals.find(j => j.id === item.dataset.id);
                     showNotes(journal);
+                });
+
+                const deleteBtn = item.querySelector('[data-delete-id]');
+                deleteBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const journalId = deleteBtn.dataset.deleteId;
+                    // const journal = state.journals.find(j => j.id === journalId);
+
+                    try {
+                        await apiCall(`/journal/${journalId}`, 'DELETE');
+                        showSuccess('journals-error', 'Journal deleted successfully!');
+                        setTimeout(() => showJournals(), 1000);
+                    } catch (error) {
+                        showError('journals-error', `Failed to delete journal: ${error.message}`);
+                    }
                 });
             });
         }
@@ -450,7 +471,6 @@ function showNoteDetail(note) {
     });
 
     document.getElementById('delete-note-detail-btn').addEventListener('click', async () => {
-        console.log('im here!');
         try {
             await apiCall(
                 `/journal/${state.currentJournal.id}/note/${note.id}`,
@@ -487,6 +507,7 @@ document.getElementById('back-btn').addEventListener('click', () => {
         showJournals();
     }
 });
+
 document.getElementById('save-journal-btn').addEventListener('click', saveJournal);
 document.getElementById('cancel-journal-btn').addEventListener('click', () => showJournals());
 
