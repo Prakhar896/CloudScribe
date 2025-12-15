@@ -2,7 +2,7 @@ import os, json, datetime, time, threading, copy
 from typing_extensions import Literal
 from .client import CloudFragment
 from .background import ThreadManager, Trigger
-from .models import Note, Journal
+from .models import Note, Journal, User
 
 # Schema:
 # - journals: dict
@@ -155,7 +155,7 @@ class ScribeDB:
         return ScribeDB.fragment.data
     
     @staticmethod
-    def deserialized_data() -> list[Journal]:
+    def deserialized_journals() -> list[Journal]:
         data = copy.deepcopy(ScribeDB.fragment.data)
         journals = []
         
@@ -168,8 +168,78 @@ class ScribeDB:
         return journals
     
     @staticmethod
+    def derialized_users() -> list[User]:
+        data = copy.deepcopy(ScribeDB.fragment.data)
+        
+        users = []
+        if "users" not in data or not isinstance(data["users"], dict):
+            return users
+        
+        for _, userDict in data["users"].items():
+            users.append(User.from_dict(userDict))
+        
+        return users
+    
+    @staticmethod
+    def retrieve_user(user_id: str) -> User | None:
+        users = ScribeDB.derialized_users()
+        for user in users:
+            if user.id == user_id:
+                return user
+        
+        return None
+    
+    @staticmethod
+    def retrieve_user_by_username(username: str) -> User | None:
+        users = ScribeDB.derialized_users()
+        for user in users:
+            if user.username == username:
+                return user
+        
+        return None
+    
+    @staticmethod
+    def save_user(user: User) -> bool:
+        data = copy.deepcopy(ScribeDB.fragment.data)
+        
+        if "users" not in data:
+            data["users"] = {}
+        
+        if not isinstance(data["users"], dict):
+            data["users"] = {}
+        
+        data["users"][user.id] = user.to_dict()
+        
+        ScribeDB.write(data)
+        return True
+    
+    @staticmethod
+    def delete_user(user_id: str) -> bool:
+        data = copy.deepcopy(ScribeDB.fragment.data)
+        
+        if "users" not in data or not isinstance(data["users"], dict):
+            return False
+        
+        if user_id not in data["users"]:
+            return False
+        
+        del data["users"][user_id]
+        
+        if "journals" in data and isinstance(data["journals"], dict):
+            journals_to_delete = []
+            for journal_id, journalDict in data["journals"].items():
+                if journalDict.get("authorID", "") == user_id:
+                    journals_to_delete.append(journal_id)
+            
+            for journal_id in journals_to_delete:
+                del data["journals"][journal_id]
+        
+        ScribeDB.write(data)
+        return True
+    
+    @staticmethod
     def retrieve_journal(journal_id: str) -> Journal | None:
-        journals = ScribeDB.deserialized_data()
+        journals = ScribeDB.deserialized_journals()
         for journal in journals:
             if journal.id == journal_id:
                 return journal
@@ -177,12 +247,12 @@ class ScribeDB:
         return None
     
     @staticmethod
-    def retrieve_journal_with_auth(journal_id: str, keyphrase: str) -> Journal | None:
+    def retrieve_journal_with_author(journal_id: str, authorID: str) -> Journal | None:
         journal = ScribeDB.retrieve_journal(journal_id)
         if journal is None:
             return None
         
-        if journal.keyphrase != keyphrase:
+        if journal.authorID != authorID:
             return None
         
         return journal
@@ -200,8 +270,8 @@ class ScribeDB:
         return None
     
     @staticmethod
-    def retrieve_note_with_auth(journal_id: str, note_id: str, keyphrase: str) -> Note | None:
-        journal = ScribeDB.retrieve_journal_with_auth(journal_id, keyphrase)
+    def retrieve_note_with_author(journal_id: str, note_id: str, authorID: str) -> Note | None:
+        journal = ScribeDB.retrieve_journal_with_author(journal_id, authorID)
         if journal is None:
             return None
         
@@ -213,6 +283,9 @@ class ScribeDB:
     
     @staticmethod
     def save_journal(journal: Journal) -> bool:
+        if journal.authorID not in [user.id for user in ScribeDB.derialized_users()]:
+            raise Exception("SCRIBEDB SAVE_JOURNAL ERROR: AuthorID does not correspond to any existing user.")
+        
         data = copy.deepcopy(ScribeDB.fragment.data)
         
         if "journals" not in data:
@@ -227,7 +300,7 @@ class ScribeDB:
         return True
     
     @staticmethod
-    def delete_journal(journal_id: str, keyphrase: str | None=None) -> bool:
+    def delete_journal(journal_id: str) -> bool:
         data = copy.deepcopy(ScribeDB.fragment.data)
         
         if "journals" not in data or not isinstance(data["journals"], dict):
@@ -235,9 +308,6 @@ class ScribeDB:
         
         if journal_id not in data["journals"]:
             return False
-        if keyphrase is not None:
-            if data["journals"][journal_id]["keyphrase"] != keyphrase:
-                return False
         
         del data["journals"][journal_id]
         
@@ -245,8 +315,8 @@ class ScribeDB:
         return True
     
     @staticmethod
-    def save_note(note: Note, journal_id: str, keyphrase: str | None=None) -> bool:
-        journal = ScribeDB.retrieve_journal(journal_id) if keyphrase is None else ScribeDB.retrieve_journal_with_auth(journal_id, keyphrase)
+    def save_note(note: Note, journal_id: str, authorID: str | None=None) -> bool:
+        journal = ScribeDB.retrieve_journal(journal_id) if authorID is None else ScribeDB.retrieve_journal_with_author(journal_id, authorID)
         if journal is None:
             return False
         
@@ -255,7 +325,7 @@ class ScribeDB:
             if existing_note.id == note.id:
                 journal.notes[idx] = note
                 ScribeDB.save_journal(journal)
-                return
+                return True
         
         # Otherwise, add new note
         journal.notes.append(note)
@@ -263,8 +333,8 @@ class ScribeDB:
         return True
     
     @staticmethod
-    def save_entries(journal_id: str, notes: list[Note], keyphrase: str | None=None) -> bool:
-        journal = ScribeDB.retrieve_journal(journal_id) if keyphrase is None else ScribeDB.retrieve_journal_with_auth(journal_id, keyphrase)
+    def save_entries(journal_id: str, notes: list[Note], authorID: str | None=None) -> bool:
+        journal = ScribeDB.retrieve_journal(journal_id) if authorID is None else ScribeDB.retrieve_journal_with_author(journal_id, authorID)
         if journal is None:
             return False
         

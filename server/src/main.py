@@ -74,7 +74,7 @@ async def create_note(note: NoteCreate, keyphrase: Annotated[str, Header()]):
     }
 })
 def get_journal(journal_id: str, keyphrase: Annotated[str, Header()]) -> JournalInfo:
-    journal = ScribeDB.retrieve_journal_with_auth(journal_id, keyphrase)
+    journal = ScribeDB.retrieve_journal_with_author(journal_id, keyphrase)
     if journal is None:
         raise HTTPException(status_code=404, detail="Journal not found.")
     
@@ -86,7 +86,7 @@ def get_journal(journal_id: str, keyphrase: Annotated[str, Header()]) -> Journal
     }
 })
 async def update_journal(journal_id: str, info: JournalUpdate, keyphrase: Annotated[str, Header()]) -> JournalInfo:
-    journal = ScribeDB.retrieve_journal_with_auth(journal_id, keyphrase)
+    journal = ScribeDB.retrieve_journal_with_author(journal_id, keyphrase)
     if journal is None:
         raise HTTPException(status_code=404, detail="Journal not found.")
     
@@ -116,7 +116,7 @@ async def delete_journal(journal_id: str, keyphrase: Annotated[str, Header()]) -
     }
 })
 async def get_journal_notes(journal_id: str, keyphrase: Annotated[str, Header()]) -> list[Note]:
-    journal = ScribeDB.retrieve_journal_with_auth(journal_id, keyphrase)
+    journal = ScribeDB.retrieve_journal_with_author(journal_id, keyphrase)
     if journal is None:
         raise HTTPException(status_code=404, detail="Journal not found.")
     
@@ -130,7 +130,7 @@ async def get_journal_notes(journal_id: str, keyphrase: Annotated[str, Header()]
     }
 })
 async def get_journal_note(journal_id: str, note_id: str, keyphrase: Annotated[str, Header()]) -> Note:
-    journal = ScribeDB.retrieve_journal_with_auth(journal_id, keyphrase)
+    journal = ScribeDB.retrieve_journal_with_author(journal_id, keyphrase)
     if journal is None:
         raise HTTPException(status_code=404, detail="Journal or Note not found.")
     
@@ -146,7 +146,7 @@ async def get_journal_note(journal_id: str, note_id: str, keyphrase: Annotated[s
     }
 })
 async def update_journal_note(journal_id: str, note_id: str, info: NoteUpdate, keyphrase: Annotated[str, Header()]) -> Note:
-    journal = ScribeDB.retrieve_journal_with_auth(journal_id, keyphrase)
+    journal = ScribeDB.retrieve_journal_with_author(journal_id, keyphrase)
     if journal is None:
         raise HTTPException(status_code=404, detail="Journal or Note not found.")
     
@@ -168,7 +168,7 @@ async def update_journal_note(journal_id: str, note_id: str, info: NoteUpdate, k
     }
 })
 async def delete_journal_note(journal_id: str, note_id: str, keyphrase: Annotated[str, Header()]) -> dict:
-    journal = ScribeDB.retrieve_journal_with_auth(journal_id, keyphrase)
+    journal = ScribeDB.retrieve_journal_with_author(journal_id, keyphrase)
     if journal is None:
         raise HTTPException(status_code=404, detail="Journal or Note not found.")
     

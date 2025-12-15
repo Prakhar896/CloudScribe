@@ -1,12 +1,72 @@
 import datetime
 from pydantic import BaseModel
 
+class User(BaseModel):
+    id: str
+    username: str
+    keyphrase: str
+    created: str
+    modified: str | None = None
+    
+    @staticmethod
+    def from_dict(data: dict) -> 'User':
+        return User(
+            id=data.get("id", ""),
+            username=data.get("username", ""),
+            keyphrase=data.get("keyphrase", ""),
+            created=data.get("created", ""),
+            modified=data.get("modified", "")
+        )
+    
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "username": self.username,
+            "keyphrase": self.keyphrase,
+            "created": self.created,
+            "modified": self.modified
+        }
+    
+    def update(self, info: 'UserUpdate') -> bool:
+        changes = False
+        if info.username is not None and info.username != self.username:
+            self.username = info.username
+            changes = True
+        if info.keyphrase is not None and info.keyphrase != self.keyphrase:
+            self.keyphrase = info.keyphrase
+            changes = True
+        if changes:
+            self.modified = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        
+        return changes
+    
+    def desensitised(self) -> 'UserInfo':
+        return UserInfo(
+            id=self.id,
+            username=self.username,
+            created=self.created,
+            modified=self.modified
+        )
+
+class UserCreate(BaseModel):
+    username: str
+    keyphrase: str
+
+class UserInfo(BaseModel):
+    id: str
+    username: str
+    created: str
+    modified: str | None = None
+
+class UserUpdate(BaseModel):
+    username: str | None = None
+    keyphrase: str | None = None
+
 class Journal(BaseModel):
     id: str
+    authorID: str
     title: str
     description: str | None = None
-    author: str
-    keyphrase: str
     created: str
     modified: str | None = None
     notes: list['Note'] = []
@@ -16,10 +76,9 @@ class Journal(BaseModel):
         notes = [Note.from_dict(nd) for nd in data.get("notes", []) if isinstance(nd, dict)]
         return Journal(
             id=data.get("id", ""),
+            authorID=data.get("authorID", ""),
             title=data.get("title", ""),
             description=data.get("description", ""),
-            author=data.get("author", ""),
-            keyphrase=data.get("keyphrase", ""),
             created=data.get("created", ""),
             notes=notes
         )
@@ -27,18 +86,12 @@ class Journal(BaseModel):
     def to_dict(self) -> dict:
         return {
             "id": self.id,
+            "authorID": self.authorID,
             "title": self.title,
             "description": self.description,
-            "author": self.author,
-            "keyphrase": self.keyphrase,
             "created": self.created,
             "notes": [note.to_dict() for note in self.notes]
         }
-    
-    def desensitised(self) -> dict:
-        data = self.to_dict()
-        data.pop("keyphrase", None)
-        return data
     
     def update(self, info: 'JournalUpdate') -> bool:
         changes = False
@@ -53,20 +106,9 @@ class Journal(BaseModel):
         
         return changes
 
-class JournalInfo(BaseModel):
-    id: str
-    title: str
-    description: str | None
-    author: str
-    created: str
-    modified: str | None
-    notes: list['Note'] = []
-
 class JournalCreate(BaseModel):
     title: str
     description: str | None = None
-    author: str
-    keyphrase: str
 
 class JournalUpdate(BaseModel):
     title: str | None = None
