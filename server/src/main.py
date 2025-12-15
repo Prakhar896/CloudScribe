@@ -1,5 +1,4 @@
 import datetime
-from typing import Annotated
 from uuid import uuid4
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
