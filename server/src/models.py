@@ -1,12 +1,14 @@
+import datetime
 from pydantic import BaseModel
 
 class Journal(BaseModel):
     id: str
     title: str
-    description: str
+    description: str | None = None
     author: str
     keyphrase: str
     created: str
+    modified: str | None = None
     notes: list['Note'] = []
     
     @staticmethod
@@ -32,6 +34,43 @@ class Journal(BaseModel):
             "created": self.created,
             "notes": [note.to_dict() for note in self.notes]
         }
+    
+    def desensitised(self) -> dict:
+        data = self.to_dict()
+        data.pop("keyphrase", None)
+        return data
+    
+    def update(self, info: 'JournalUpdate') -> bool:
+        changes = False
+        if info.title is not None and info.title != self.title:
+            self.title = info.title
+            changes = True
+        if info.description is not None and info.description != self.description:
+            self.description = info.description
+            changes = True
+        if changes:
+            self.modified = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        
+        return changes
+
+class JournalInfo(BaseModel):
+    id: str
+    title: str
+    description: str | None
+    author: str
+    created: str
+    modified: str | None
+    notes: list['Note'] = []
+
+class JournalCreate(BaseModel):
+    title: str
+    description: str | None = None
+    author: str
+    keyphrase: str
+
+class JournalUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
 
 class Note(BaseModel):
     id: str
@@ -61,8 +100,25 @@ class Note(BaseModel):
             "modified": self.modified,
             "tags": self.tags
         }
+    
+    def update(self, info: 'NoteUpdate') -> bool:
+        changes = False
+        if info.title is not None and info.title != self.title:
+            self.title = info.title
+            changes = True
+        if info.content is not None and info.content != self.content:
+            self.content = info.content
+            changes = True
+        if info.tags is not None and info.tags != self.tags:
+            self.tags = info.tags
+            changes = True
+        if changes:
+            self.modified = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        
+        return changes
 
 class NoteCreate(BaseModel):
+    journal_id: str
     title: str
     content: str
     tags: list[str] = []
