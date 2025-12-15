@@ -3,6 +3,7 @@ from typing import Annotated
 from uuid import uuid4
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from .background import ThreadManager
 from .models import Journal, JournalCreate, JournalUpdate, Note, NoteCreate, NoteUpdate, User, UserCreate, UserUpdate, UserInfo, ErrorMessage, StatusUpdate
 from .database import ScribeDB
@@ -18,6 +19,8 @@ async def lifespan(app: FastAPI):
     ScribeDB.shutdown()
 
 app = FastAPI(title='Scribe', lifespan=lifespan)
+
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"], allow_credentials=True)
 
 @app.get("/")
 async def home():
