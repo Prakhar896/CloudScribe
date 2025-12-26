@@ -1,0 +1,13 @@
+{
+    "scripts": {
+        "run": [
+            "pm2 start ./virt/bin/python --name CloudScribeServer -- -m uvicorn src.main:app --host 0.0.0.0 --port 8050"
+        ],
+        "stop": [
+            "pm2 stop CloudScribeServer"
+        ],
+        "logs": [
+            "pm2 logs CloudScribeServer --lines 100"
+        ]
+    }
+}
