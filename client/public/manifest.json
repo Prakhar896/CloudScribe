@@ -2,6 +2,9 @@
     "manifest_version": 3,
     "name": "Scribe",
     "version": "1.0.0",
+    "icons": {
+        "512": "logo.png"
+    },
     "host_permissions": [
         "https://scribe.prakhar.app/*"
     ],
