@@ -4,6 +4,7 @@ import { JournalAPI, NoteAPI } from '../api';
 import type { Journal, JournalUpdate, Note, NoteCreate } from '../types';
 import { setLastOpenedJournalId } from '../utils/storage';
 import { ArrowLeftIcon, PlusIcon, MagnifyingGlassIcon, TrashIcon, Pencil1Icon } from '@radix-ui/react-icons';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function JournalDetail() {
   const { journalId } = useParams<{ journalId: string }>();
@@ -139,7 +140,7 @@ export default function JournalDetail() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen w-full bg-zinc-950">
+      <div className="flex items-center justify-center h-screen w-full bg-white dark:bg-zinc-950">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
       </div>
     );
@@ -147,11 +148,11 @@ export default function JournalDetail() {
 
   if (error || !journal) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen w-full bg-zinc-950 text-white p-6 text-center">
+      <div className="flex flex-col items-center justify-center h-screen w-full bg-white dark:bg-zinc-950 text-black dark:text-white p-6 text-center">
         <p className="text-red-500 mb-4">{error || 'Journal not found'}</p>
         <button
           onClick={() => navigate('/journals')}
-          className="px-4 py-2 bg-zinc-800 rounded-md hover:bg-zinc-700 transition-colors"
+          className="px-4 py-2 bg-zinc-200 dark:bg-zinc-800 rounded-md hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
         >
           Back to Journals
         </button>
@@ -160,24 +161,25 @@ export default function JournalDetail() {
   }
 
   return (
-    <div className="flex flex-col h-screen w-full bg-zinc-950 text-white relative">
-      <header className="flex items-center p-4 border-b border-zinc-800 shrink-0 gap-3">
+    <div className="flex flex-col h-screen w-full bg-white dark:bg-zinc-950 text-black dark:text-white relative">
+      <header className="flex items-center p-4 border-b border-zinc-300 dark:border-zinc-800 shrink-0 gap-3">
         <button
           onClick={() => {
             setLastOpenedJournalId(''); // Clear when leaving manually
             navigate('/journals');
           }}
-          className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
+          className="p-2 hover:bg-zinc-200 dark:bg-zinc-800 rounded-full transition-colors"
         >
-          <ArrowLeftIcon className="w-5 h-5 text-zinc-300" />
+          <ArrowLeftIcon className="w-5 h-5 text-zinc-600 dark:text-zinc-300" />
         </button>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 flex items-center gap-2">
           <h1 className="text-lg font-bold truncate">{journal.title}</h1>
+          <ThemeToggle />
         </div>
         <div className="flex space-x-2">
           <button
             onClick={() => setIsEditingJournal(!isEditingJournal)}
-            className={`p-2 rounded-md transition-colors ${isEditingJournal ? 'bg-zinc-700' : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'}`}
+            className={`p-2 rounded-md transition-colors ${isEditingJournal ? 'bg-zinc-700' : 'bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300'}`}
             title="Edit Journal"
           >
             <Pencil1Icon className="w-5 h-5" />
@@ -200,23 +202,23 @@ export default function JournalDetail() {
       </header>
 
       {isEditingJournal && (
-        <div className="p-4 border-b border-zinc-800 shrink-0 bg-zinc-900/50">
+        <div className="p-4 border-b border-zinc-300 dark:border-zinc-800 shrink-0 bg-zinc-50 dark:bg-zinc-900/50">
           <form onSubmit={handleUpdateJournal} className="space-y-3">
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1">Journal Title</label>
+              <label className="block text-xs font-medium text-zinc-400 dark:text-zinc-500 dark:text-zinc-400 mb-1">Journal Title</label>
               <input
                 type="text"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-white text-sm"
+                className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-400 dark:border-zinc-700 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black dark:text-white text-sm"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1">Description</label>
+              <label className="block text-xs font-medium text-zinc-400 dark:text-zinc-500 dark:text-zinc-400 mb-1">Description</label>
               <textarea
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-white resize-none text-sm h-16"
+                className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-400 dark:border-zinc-700 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black dark:text-white resize-none text-sm h-16"
               />
             </div>
             <div className="flex space-x-2 pt-1">
@@ -227,14 +229,14 @@ export default function JournalDetail() {
                   setEditTitle(journal.title);
                   setEditDescription(journal.description || '');
                 }}
-                className="flex-1 py-1.5 px-3 bg-zinc-800 text-white text-xs font-semibold rounded-md hover:bg-zinc-700 transition-colors"
+                className="flex-1 py-1.5 px-3 bg-zinc-200 dark:bg-zinc-800 text-black dark:text-white text-xs font-semibold rounded-md hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={!editTitle}
-                className="flex-1 py-1.5 px-3 bg-blue-600 text-white text-xs font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="flex-1 py-1.5 px-3 bg-blue-600 text-black dark:text-white text-xs font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
                 Save
               </button>
@@ -245,19 +247,19 @@ export default function JournalDetail() {
 
       {!isEditingJournal && journal.description && (
         <div className="px-4 pt-3 pb-1 shrink-0">
-          <p className="text-sm text-zinc-400">{journal.description}</p>
+          <p className="text-sm text-zinc-400 dark:text-zinc-500 dark:text-zinc-400">{journal.description}</p>
         </div>
       )}
 
-      <div className={`p-4 border-b border-zinc-800 shrink-0 space-y-3 ${!isEditingJournal && journal.description ? 'pt-2' : ''}`}>
+      <div className={`p-4 border-b border-zinc-300 dark:border-zinc-800 shrink-0 space-y-3 ${!isEditingJournal && journal.description ? 'pt-2' : ''}`}>
         <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
+          <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-4 h-4 text-zinc-400 dark:text-zinc-500" />
           <input
             type="text"
             placeholder="Search notes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-zinc-900 border border-zinc-800 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-white placeholder-zinc-500 transition-colors"
+            className="w-full pl-9 pr-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-black dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 transition-colors"
           />
         </div>
 
@@ -267,8 +269,8 @@ export default function JournalDetail() {
               onClick={() => setSelectedTag(null)}
               className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
                 selectedTag === null
-                  ? 'bg-zinc-100 text-zinc-900 border-zinc-100'
-                  : 'bg-zinc-900 text-zinc-400 border-zinc-700 hover:border-zinc-500'
+                  ? 'bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100'
+                  : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-400 dark:text-zinc-500 dark:text-zinc-400 border-zinc-400 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500'
               }`}
             >
               All
@@ -279,8 +281,8 @@ export default function JournalDetail() {
                 onClick={() => setSelectedTag(tag)}
                 className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
                   selectedTag === tag
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-zinc-900 text-zinc-400 border-zinc-700 hover:border-zinc-500'
+                    ? 'bg-blue-600 text-black dark:text-white border-blue-600'
+                    : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-400 dark:text-zinc-500 dark:text-zinc-400 border-zinc-400 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500'
                 }`}
               >
                 #{tag}
@@ -292,7 +294,7 @@ export default function JournalDetail() {
 
       <main className="flex-1 overflow-y-auto p-4 space-y-3">
         {filteredNotes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-zinc-500 py-10">
+          <div className="flex flex-col items-center justify-center h-full text-zinc-400 dark:text-zinc-500 py-10">
             <p className="text-sm">No notes found.</p>
           </div>
         ) : (
@@ -300,25 +302,25 @@ export default function JournalDetail() {
             <div
               key={note.id}
               onClick={() => navigate(`/journals/${journalId}/notes/${note.id}`)}
-              className="flex flex-col p-4 bg-zinc-900 border border-zinc-800 rounded-lg hover:border-zinc-600 cursor-pointer transition-colors"
+              className="flex flex-col p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-lg hover:border-zinc-400 dark:hover:border-zinc-600 cursor-pointer transition-colors"
             >
-              <h2 className="text-sm font-semibold text-zinc-100 line-clamp-1">{note.title}</h2>
-              <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{note.content}</p>
+              <h2 className="text-sm font-semibold text-zinc-100 dark:text-zinc-900 dark:text-zinc-100 line-clamp-1">{note.title}</h2>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">{note.content}</p>
 
               <div className="flex justify-between items-center mt-3">
                 <div className="flex gap-1.5 overflow-hidden">
                   {note.tags?.slice(0, 3).map((tag, i) => (
-                    <span key={i} className="text-[10px] px-1.5 py-0.5 bg-zinc-800 text-zinc-300 rounded">
+                    <span key={i} className="text-[10px] px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded">
                       {tag}
                     </span>
                   ))}
                   {(note.tags?.length || 0) > 3 && (
-                    <span className="text-[10px] px-1.5 py-0.5 text-zinc-500">
+                    <span className="text-[10px] px-1.5 py-0.5 text-zinc-400 dark:text-zinc-500">
                       +{note.tags!.length - 3}
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] text-zinc-500 shrink-0">
+                <span className="text-[10px] text-zinc-400 dark:text-zinc-500 shrink-0">
                   {new Date(note.created).toLocaleDateString()}
                 </span>
               </div>
@@ -330,15 +332,15 @@ export default function JournalDetail() {
       {/* Create Note Modal */}
       {showCreateModal && (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <div className="bg-zinc-900 p-5 rounded-lg border border-zinc-700 w-full max-w-sm flex flex-col h-[80%] max-h-[500px]">
-            <h3 className="text-lg font-semibold mb-4 text-zinc-100 shrink-0">New Note</h3>
+          <div className="bg-zinc-50 dark:bg-zinc-900 p-5 rounded-lg border border-zinc-400 dark:border-zinc-700 w-full max-w-sm flex flex-col h-[80%] max-h-[500px]">
+            <h3 className="text-lg font-semibold mb-4 text-zinc-100 dark:text-zinc-900 dark:text-zinc-100 shrink-0">New Note</h3>
             <form onSubmit={handleCreateNote} className="flex flex-col flex-1 space-y-3 overflow-hidden">
               <div className="shrink-0">
                 <input
                   type="text"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-white text-sm"
+                  className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black dark:text-white text-sm"
                   placeholder="Note Title"
                   autoFocus
                 />
@@ -347,7 +349,7 @@ export default function JournalDetail() {
                 <textarea
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
-                  className="w-full h-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-white resize-none text-sm"
+                  className="w-full h-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black dark:text-white resize-none text-sm"
                   placeholder="Start typing your note here..."
                 />
               </div>
@@ -356,7 +358,7 @@ export default function JournalDetail() {
                   type="text"
                   value={newTagsInput}
                   onChange={(e) => setNewTagsInput(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-white text-xs"
+                  className="w-full px-3 py-2 bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black dark:text-white text-xs"
                   placeholder="Tags (comma separated, e.g. work, ideas)"
                 />
               </div>
@@ -364,14 +366,14 @@ export default function JournalDetail() {
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 py-2 px-4 bg-zinc-800 text-white text-sm font-semibold rounded-md hover:bg-zinc-700 transition-colors"
+                  className="flex-1 py-2 px-4 bg-zinc-200 dark:bg-zinc-800 text-black dark:text-white text-sm font-semibold rounded-md hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!newTitle || !newContent}
-                  className="flex-1 py-2 px-4 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 py-2 px-4 bg-blue-600 text-black dark:text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
                   Save Note
                 </button>
@@ -384,23 +386,23 @@ export default function JournalDetail() {
       {/* Delete Journal Confirm Modal */}
       {showDeleteConfirm && (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <div className="bg-zinc-900 p-5 rounded-lg border border-zinc-700 w-full max-w-sm">
+          <div className="bg-zinc-50 dark:bg-zinc-900 p-5 rounded-lg border border-zinc-400 dark:border-zinc-700 w-full max-w-sm">
             <h3 className="text-lg font-semibold mb-2 text-red-400">Delete Journal?</h3>
-            <p className="text-sm text-zinc-300 mb-5">
+            <p className="text-sm text-zinc-600 dark:text-zinc-300 mb-5">
               Are you sure you want to delete this journal and all its notes? This action cannot be undone.
             </p>
             <div className="flex space-x-3">
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 py-2 px-4 bg-zinc-800 text-white text-sm font-semibold rounded-md hover:bg-zinc-700 transition-colors"
+                className="flex-1 py-2 px-4 bg-zinc-200 dark:bg-zinc-800 text-black dark:text-white text-sm font-semibold rounded-md hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleDeleteJournal}
-                className="flex-1 py-2 px-4 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-700 transition-colors"
+                className="flex-1 py-2 px-4 bg-red-600 text-black dark:text-white text-sm font-semibold rounded-md hover:bg-red-700 transition-colors"
               >
                 Delete Journal
               </button>
