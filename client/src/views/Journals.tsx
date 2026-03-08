@@ -106,7 +106,7 @@ export default function Journals() {
           </button>
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="p-2 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-md transition-colors"
+            className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-md transition-colors"
             title="Delete Account"
           >
             <TrashIcon className="w-5 h-5" />
@@ -186,7 +186,7 @@ export default function Journals() {
                 <button
                   type="submit"
                   disabled={!newTitle}
-                  className="flex-1 py-2 px-4 bg-blue-600 text-black dark:text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 py-2 px-4 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
                   Create
                 </button>
@@ -215,7 +215,7 @@ export default function Journals() {
               <button
                 type="button"
                 onClick={handleDeleteAccount}
-                className="flex-1 py-2 px-4 bg-red-600 text-black dark:text-white text-sm font-semibold rounded-md hover:bg-red-700 transition-colors"
+                className="flex-1 py-2 px-4 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-700 transition-colors"
               >
                 Delete Everything
               </button>

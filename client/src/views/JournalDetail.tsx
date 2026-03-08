@@ -74,7 +74,7 @@ export default function JournalDetail() {
     }
   };
 
-  const handleUpdateJournal = async (e: React.FormEvent) => {
+  const handleUpdateJournal = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!journalId || !editTitle) return;
     try {
@@ -179,21 +179,21 @@ export default function JournalDetail() {
         <div className="flex space-x-2">
           <button
             onClick={() => setIsEditingJournal(!isEditingJournal)}
-            className={`p-2 rounded-md transition-colors ${isEditingJournal ? 'bg-zinc-700' : 'bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300'}`}
+            className={`p-2 rounded-md transition-colors ${isEditingJournal ? 'bg-zinc-300 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100' : 'bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300'}`}
             title="Edit Journal"
           >
             <Pencil1Icon className="w-5 h-5" />
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="p-2 bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+            className="p-2 bg-blue-600 hover:bg-blue-700 rounded-md transition-colors text-white"
             title="Create Note"
           >
             <PlusIcon className="w-5 h-5" />
           </button>
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="p-2 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-md transition-colors"
+            className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-md transition-colors"
             title="Delete Journal"
           >
             <TrashIcon className="w-5 h-5" />
@@ -236,7 +236,7 @@ export default function JournalDetail() {
               <button
                 type="submit"
                 disabled={!editTitle}
-                className="flex-1 py-1.5 px-3 bg-blue-600 text-black dark:text-white text-xs font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="flex-1 py-1.5 px-3 bg-blue-600 text-white text-xs font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
                 Save
               </button>
@@ -281,7 +281,7 @@ export default function JournalDetail() {
                 onClick={() => setSelectedTag(tag)}
                 className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
                   selectedTag === tag
-                    ? 'bg-blue-600 text-black dark:text-white border-blue-600'
+                    ? 'bg-blue-600 text-white border-blue-600'
                     : 'bg-zinc-50 dark:bg-zinc-900 text-zinc-400 dark:text-zinc-500 dark:text-zinc-400 border-zinc-400 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500'
                 }`}
               >
@@ -304,7 +304,7 @@ export default function JournalDetail() {
               onClick={() => navigate(`/journals/${journalId}/notes/${note.id}`)}
               className="flex flex-col p-4 bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-lg hover:border-zinc-400 dark:hover:border-zinc-600 cursor-pointer transition-colors"
             >
-              <h2 className="text-sm font-semibold text-zinc-100 dark:text-zinc-900 dark:text-zinc-100 line-clamp-1">{note.title}</h2>
+              <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-1">{note.title}</h2>
               <p className="text-xs text-zinc-400 dark:text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">{note.content}</p>
 
               <div className="flex justify-between items-center mt-3">
@@ -333,7 +333,7 @@ export default function JournalDetail() {
       {showCreateModal && (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
           <div className="bg-zinc-50 dark:bg-zinc-900 p-5 rounded-lg border border-zinc-400 dark:border-zinc-700 w-full max-w-sm flex flex-col h-[80%] max-h-[500px]">
-            <h3 className="text-lg font-semibold mb-4 text-zinc-100 dark:text-zinc-900 dark:text-zinc-100 shrink-0">New Note</h3>
+            <h3 className="text-lg font-semibold mb-4 text-zinc-900 dark:text-zinc-100 shrink-0">New Note</h3>
             <form onSubmit={handleCreateNote} className="flex flex-col flex-1 space-y-3 overflow-hidden">
               <div className="shrink-0">
                 <input
@@ -373,7 +373,7 @@ export default function JournalDetail() {
                 <button
                   type="submit"
                   disabled={!newTitle || !newContent}
-                  className="flex-1 py-2 px-4 bg-blue-600 text-black dark:text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 py-2 px-4 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
                   Save Note
                 </button>
@@ -402,7 +402,7 @@ export default function JournalDetail() {
               <button
                 type="button"
                 onClick={handleDeleteJournal}
-                className="flex-1 py-2 px-4 bg-red-600 text-black dark:text-white text-sm font-semibold rounded-md hover:bg-red-700 transition-colors"
+                className="flex-1 py-2 px-4 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-700 transition-colors"
               >
                 Delete Journal
               </button>

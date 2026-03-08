@@ -92,7 +92,7 @@ export default function Login() {
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight mb-2">Scribe</h1>
-          <p className="text-sm text-zinc-400 dark:text-zinc-500 dark:text-zinc-400">Your cloud-based note-taking app</p>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Your cloud-based note-taking app</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -102,7 +102,7 @@ export default function Login() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white dark:text-black dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 transition-colors"
+              className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 transition-colors"
               placeholder="johndoe"
               autoFocus
             />
@@ -113,7 +113,7 @@ export default function Login() {
               type="password"
               value={keyphrase}
               onChange={(e) => setKeyphrase(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white dark:text-black dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 transition-colors"
+              className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 transition-colors"
               placeholder="••••••••"
             />
           </div>
@@ -130,13 +130,13 @@ export default function Login() {
             </button>
           ) : (
             <div className="space-y-4 pt-2 border-t border-zinc-300 dark:border-zinc-800">
-              <p className="text-sm text-zinc-400 dark:text-zinc-500 dark:text-zinc-400 text-center">User not found. Create a new account?</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center">User not found. Create a new account?</p>
               <div className="flex space-x-3">
                 <button
                   type="button"
                   onClick={handleCreateAccount}
                   disabled={loading}
-                  className="flex-1 py-2 px-4 bg-blue-600 text-white dark:text-black dark:text-white font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 py-2 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
                   Create Account
                 </button>
@@ -144,7 +144,7 @@ export default function Login() {
                   type="button"
                   onClick={() => setUserNotFound(false)}
                   disabled={loading}
-                  className="flex-1 py-2 px-4 bg-zinc-200 dark:bg-zinc-800 text-white dark:text-black dark:text-white font-semibold rounded-md hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
+                  className="flex-1 py-2 px-4 bg-zinc-200 dark:bg-zinc-800 text-black dark:text-white font-semibold rounded-md hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
                 >
                   Retry Login
                 </button>

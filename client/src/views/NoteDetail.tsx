@@ -137,7 +137,7 @@ export default function NoteDetail() {
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="p-2 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-md transition-colors"
+              className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-md transition-colors"
               title="Delete Note"
             >
               <TrashIcon className="w-5 h-5" />
@@ -149,7 +149,7 @@ export default function NoteDetail() {
       {isEditing ? (
         <form onSubmit={handleUpdate} className="flex flex-col flex-1 p-4 space-y-4 overflow-hidden">
           <div className="shrink-0">
-            <label className="block text-sm font-medium text-zinc-400 dark:text-zinc-500 dark:text-zinc-400 mb-1">Title</label>
+            <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Title</label>
             <input
               type="text"
               value={editTitle}
@@ -159,7 +159,7 @@ export default function NoteDetail() {
             />
           </div>
           <div className="flex-1 flex flex-col min-h-0">
-            <label className="block text-sm font-medium text-zinc-400 dark:text-zinc-500 dark:text-zinc-400 mb-1">Content</label>
+            <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Content</label>
             <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
@@ -167,7 +167,7 @@ export default function NoteDetail() {
             />
           </div>
           <div className="shrink-0">
-            <label className="block text-sm font-medium text-zinc-400 dark:text-zinc-500 dark:text-zinc-400 mb-1">Tags (comma separated)</label>
+            <label className="block text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Tags (comma separated)</label>
             <input
               type="text"
               value={editTagsInput}
@@ -191,7 +191,7 @@ export default function NoteDetail() {
             <button
               type="submit"
               disabled={!editTitle || !editContent}
-              className="flex-1 py-2 px-4 bg-blue-600 text-black dark:text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex-1 py-2 px-4 bg-blue-600 text-white text-sm font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
               Save Changes
             </button>
@@ -224,7 +224,7 @@ export default function NoteDetail() {
       {!isEditing && (
         <button
           onClick={handleCopy}
-          className="absolute bottom-6 right-6 p-4 bg-blue-600 text-black dark:text-white rounded-full shadow-lg hover:bg-blue-500 transition-all hover:scale-105 group flex items-center justify-center gap-2 z-10"
+          className="absolute bottom-6 right-6 p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 transition-all hover:scale-105 group flex items-center justify-center gap-2 z-10"
           title="Copy Note Content"
         >
           {copied ? <CheckIcon className="w-6 h-6" /> : <CopyIcon className="w-6 h-6" />}
@@ -250,7 +250,7 @@ export default function NoteDetail() {
               <button
                 type="button"
                 onClick={handleDelete}
-                className="flex-1 py-2 px-4 bg-red-600 text-black dark:text-white text-sm font-semibold rounded-md hover:bg-red-700 transition-colors"
+                className="flex-1 py-2 px-4 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-700 transition-colors"
               >
                 Delete Note
               </button>
