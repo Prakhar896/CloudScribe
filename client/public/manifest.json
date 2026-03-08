@@ -1,0 +1,14 @@
+{
+    "manifest_version": 3,
+    "name": "Scribe",
+    "version": "1.0.0",
+    "host_permissions": [
+        "https://scribe.prakhar.app/*"
+    ],
+    "permissions": [
+        "storage"
+    ],
+    "action": {
+        "default_popup": "index.html"
+    }
+}
