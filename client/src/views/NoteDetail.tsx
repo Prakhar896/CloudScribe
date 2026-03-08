@@ -20,6 +20,7 @@ export default function NoteDetail() {
 
   // Copy success state
   const [copied, setCopied] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (journalId && noteId) {
@@ -56,13 +57,12 @@ export default function NoteDetail() {
 
   const handleDelete = async () => {
     if (!journalId || !noteId) return;
-    if (window.confirm('Are you sure you want to delete this note?')) {
-      try {
-        await NoteAPI.deleteNote(journalId, noteId);
-        navigate(`/journals/${journalId}`);
-      } catch (err: any) {
-        alert(err.response?.data?.detail || 'Failed to delete note');
-      }
+    try {
+      await NoteAPI.deleteNote(journalId, noteId);
+      navigate(`/journals/${journalId}`);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to delete note');
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -134,7 +134,7 @@ export default function NoteDetail() {
               <Pencil1Icon className="w-5 h-5" />
             </button>
             <button
-              onClick={handleDelete}
+              onClick={() => setShowDeleteConfirm(true)}
               className="p-2 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-md transition-colors"
               title="Delete Note"
             >
@@ -211,20 +211,50 @@ export default function NoteDetail() {
             {note.content}
           </div>
 
-          <div className="mt-8 pt-4 border-t border-zinc-800 text-xs text-zinc-500 flex justify-between">
+          <div className="mt-8 pt-4 pb-20 border-t border-zinc-800 text-xs text-zinc-500 flex justify-between">
             <span>Created: {new Date(note.created).toLocaleString()}</span>
             {note.modified && <span>Updated: {new Date(note.modified).toLocaleString()}</span>}
           </div>
-
-          {/* Floating Action Button for Copy */}
-          <button
-            onClick={handleCopy}
-            className="absolute bottom-6 right-6 p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 transition-all hover:scale-105 group flex items-center justify-center gap-2"
-            title="Copy Note Content"
-          >
-            {copied ? <CheckIcon className="w-6 h-6" /> : <CopyIcon className="w-6 h-6" />}
-          </button>
         </main>
+      )}
+
+      {/* Floating Action Button for Copy (Outside main so it stays fixed relative to the viewport container) */}
+      {!isEditing && (
+        <button
+          onClick={handleCopy}
+          className="absolute bottom-6 right-6 p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 transition-all hover:scale-105 group flex items-center justify-center gap-2 z-10"
+          title="Copy Note Content"
+        >
+          {copied ? <CheckIcon className="w-6 h-6" /> : <CopyIcon className="w-6 h-6" />}
+        </button>
+      )}
+
+      {/* Delete Note Confirm Modal */}
+      {showDeleteConfirm && (
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="bg-zinc-900 p-5 rounded-lg border border-zinc-700 w-full max-w-sm">
+            <h3 className="text-lg font-semibold mb-2 text-red-400">Delete Note?</h3>
+            <p className="text-sm text-zinc-300 mb-5">
+              Are you sure you want to delete this note? This action cannot be undone.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-2 px-4 bg-zinc-800 text-white text-sm font-semibold rounded-md hover:bg-zinc-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="flex-1 py-2 px-4 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-700 transition-colors"
+              >
+                Delete Note
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

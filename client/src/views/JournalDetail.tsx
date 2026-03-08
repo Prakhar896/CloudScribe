@@ -1,9 +1,9 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { JournalAPI, NoteAPI } from '../api';
-import type { Journal, Note, NoteCreate } from '../types';
+import type { Journal, JournalUpdate, Note, NoteCreate } from '../types';
 import { setLastOpenedJournalId } from '../utils/storage';
-import { ArrowLeftIcon, PlusIcon, MagnifyingGlassIcon } from '@radix-ui/react-icons';
+import { ArrowLeftIcon, PlusIcon, MagnifyingGlassIcon, TrashIcon, Pencil1Icon } from '@radix-ui/react-icons';
 
 export default function JournalDetail() {
   const { journalId } = useParams<{ journalId: string }>();
@@ -18,11 +18,19 @@ export default function JournalDetail() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  // Note Creation Modal
+  // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Note Creation
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [newTagsInput, setNewTagsInput] = useState('');
+
+  // Journal Editing
+  const [isEditingJournal, setIsEditingJournal] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
 
   useEffect(() => {
     if (journalId) {
@@ -39,7 +47,8 @@ export default function JournalDetail() {
         NoteAPI.getNotes(id)
       ]);
       setJournal(jData);
-      // Backend may return empty array or notes directly, ensure it's an array
+      setEditTitle(jData.title);
+      setEditDescription(jData.description || '');
       setNotes(nData || []);
     } catch (err: any) {
       if (err.response?.status === 401) {
@@ -49,6 +58,34 @@ export default function JournalDetail() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteJournal = async () => {
+    if (!journalId) return;
+    try {
+      await JournalAPI.deleteJournal(journalId);
+      setLastOpenedJournalId('');
+      navigate('/journals');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to delete journal');
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleUpdateJournal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!journalId || !editTitle) return;
+    try {
+      const updateData: JournalUpdate = {
+        title: editTitle,
+        description: editDescription || null,
+      };
+      const updated = await JournalAPI.updateJournal(journalId, updateData);
+      setJournal(updated);
+      setIsEditingJournal(false);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to update journal');
     }
   };
 
@@ -89,13 +126,15 @@ export default function JournalDetail() {
   }, [notes]);
 
   const filteredNotes = useMemo(() => {
-    return notes.filter(note => {
-      const matchesSearch =
-        note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        note.content.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesTag = selectedTag ? note.tags?.map(t => t.toLowerCase()).includes(selectedTag) : true;
-      return matchesSearch && matchesTag;
-    });
+    return notes
+      .filter(note => {
+        const matchesSearch =
+          note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          note.content.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesTag = selectedTag ? note.tags?.map(t => t.toLowerCase()).includes(selectedTag) : true;
+        return matchesSearch && matchesTag;
+      })
+      .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime()); // Sort descending
   }, [notes, searchQuery, selectedTag]);
 
   if (loading) {
@@ -135,16 +174,82 @@ export default function JournalDetail() {
         <div className="flex-1 min-w-0">
           <h1 className="text-lg font-bold truncate">{journal.title}</h1>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="p-2 bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
-          title="Create Note"
-        >
-          <PlusIcon className="w-5 h-5" />
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setIsEditingJournal(!isEditingJournal)}
+            className={`p-2 rounded-md transition-colors ${isEditingJournal ? 'bg-zinc-700' : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300'}`}
+            title="Edit Journal"
+          >
+            <Pencil1Icon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="p-2 bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+            title="Create Note"
+          >
+            <PlusIcon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="p-2 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-md transition-colors"
+            title="Delete Journal"
+          >
+            <TrashIcon className="w-5 h-5" />
+          </button>
+        </div>
       </header>
 
-      <div className="p-4 border-b border-zinc-800 shrink-0 space-y-3">
+      {isEditingJournal && (
+        <div className="p-4 border-b border-zinc-800 shrink-0 bg-zinc-900/50">
+          <form onSubmit={handleUpdateJournal} className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1">Journal Title</label>
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-white text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-zinc-400 mb-1">Description</label>
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-white resize-none text-sm h-16"
+              />
+            </div>
+            <div className="flex space-x-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditingJournal(false);
+                  setEditTitle(journal.title);
+                  setEditDescription(journal.description || '');
+                }}
+                className="flex-1 py-1.5 px-3 bg-zinc-800 text-white text-xs font-semibold rounded-md hover:bg-zinc-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!editTitle}
+                className="flex-1 py-1.5 px-3 bg-blue-600 text-white text-xs font-semibold rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {!isEditingJournal && journal.description && (
+        <div className="px-4 pt-3 pb-1 shrink-0">
+          <p className="text-sm text-zinc-400">{journal.description}</p>
+        </div>
+      )}
+
+      <div className={`p-4 border-b border-zinc-800 shrink-0 space-y-3 ${!isEditingJournal && journal.description ? 'pt-2' : ''}`}>
         <div className="relative">
           <MagnifyingGlassIcon className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
           <input
@@ -272,6 +377,34 @@ export default function JournalDetail() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Journal Confirm Modal */}
+      {showDeleteConfirm && (
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="bg-zinc-900 p-5 rounded-lg border border-zinc-700 w-full max-w-sm">
+            <h3 className="text-lg font-semibold mb-2 text-red-400">Delete Journal?</h3>
+            <p className="text-sm text-zinc-300 mb-5">
+              Are you sure you want to delete this journal and all its notes? This action cannot be undone.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-2 px-4 bg-zinc-800 text-white text-sm font-semibold rounded-md hover:bg-zinc-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteJournal}
+                className="flex-1 py-2 px-4 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-700 transition-colors"
+              >
+                Delete Journal
+              </button>
+            </div>
           </div>
         </div>
       )}

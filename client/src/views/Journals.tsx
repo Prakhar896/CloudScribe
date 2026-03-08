@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { JournalAPI } from '../api';
+import { JournalAPI, UserAPI } from '../api';
 import type { Journal, JournalCreate } from '../types';
 import { clearAuthCredentials, getAuthCredentials } from '../utils/storage';
-import { PlusIcon, ExitIcon } from '@radix-ui/react-icons';
+import { PlusIcon, ExitIcon, TrashIcon } from '@radix-ui/react-icons';
 
 export default function Journals() {
   const [journals, setJournals] = useState<Journal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [username, setUsername] = useState<string>('');
@@ -58,6 +59,17 @@ export default function Journals() {
     navigate('/login');
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      await UserAPI.deleteUser();
+      await clearAuthCredentials();
+      navigate('/login');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to delete account');
+      setShowDeleteConfirm(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen w-full">
@@ -83,10 +95,17 @@ export default function Journals() {
           </button>
           <button
             onClick={handleLogout}
-            className="p-2 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-md transition-colors"
+            className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded-md transition-colors"
             title="Logout"
           >
             <ExitIcon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="p-2 bg-red-900/30 text-red-400 hover:bg-red-900/50 rounded-md transition-colors"
+            title="Delete Account"
+          >
+            <TrashIcon className="w-5 h-5" />
           </button>
         </div>
       </header>
@@ -169,6 +188,34 @@ export default function Journals() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirm Modal */}
+      {showDeleteConfirm && (
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="bg-zinc-900 p-5 rounded-lg border border-zinc-700 w-full max-w-sm">
+            <h3 className="text-lg font-semibold mb-2 text-red-400">Delete Account?</h3>
+            <p className="text-sm text-zinc-300 mb-5">
+              Are you sure you want to delete your account? This action cannot be undone and all your journals and notes will be permanently lost.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-2 px-4 bg-zinc-800 text-white text-sm font-semibold rounded-md hover:bg-zinc-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                className="flex-1 py-2 px-4 bg-red-600 text-white text-sm font-semibold rounded-md hover:bg-red-700 transition-colors"
+              >
+                Delete Everything
+              </button>
+            </div>
           </div>
         </div>
       )}
