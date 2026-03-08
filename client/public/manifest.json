@@ -1,11 +1,13 @@
 {
     "manifest_version": 3,
     "name": "Scribe",
+    "description": "Convenient cloud-based note-taking app. Organise your notes in journals and sync everywhere with one account.",
     "version": "1.0.0",
     "icons": {
         "512": "logo.png"
     },
     "host_permissions": [
+        "http://localhost:8000/*",
         "https://scribe.prakhar.app/*"
     ],
     "permissions": [
